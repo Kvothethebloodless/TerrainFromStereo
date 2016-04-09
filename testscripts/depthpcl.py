@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import glob
 import cv2
@@ -5,6 +6,7 @@ import time
 import yaml
 from matplotlib import pyplot as plt
 import pcl as pcl
+import mpldatacursor
 
 plt.ion()
 
@@ -74,33 +76,13 @@ P2 = 32*3*window_size**2)
 
 stereo = loadfromtuner(stereo, 'tes')
 
-def kitti_test():
-
-    #plt.set_cmap('gray')
-    fig = plt.figure( 1 )
-    ax = fig.add_subplot( 111 )
-    ax.set_title("My Title")
-
-    im = ax.imshow(cv2.imread(fname_left[0]))# Blank starting image
-    fig.show()
-    fig.canvas.draw()
-
-
-    for i in range(len(fname_left)):
-        img_l = cv2.cvtColor(cv2.imread(fname_left[i]), cv2.COLOR_BGR2GRAY)
-        img_r = cv2.cvtColor(cv2.imread(fname_right[i]), cv2.COLOR_BGR2GRAY)
-        disp = stereo.compute(img_l, img_r)
-        im.set_data(disp)
-        fig.canvas.draw()
-
-        # cv2.imshow('frame',disp)
-        # cv2.waitKey(10)
-        print('fno:' + str(i))
 
 def testfromkitti():
+
     disp = stereo.compute(imgL,imgR)
     plt.imshow(disp)
     plt.show()
+
 
 def disptodepth(stereo_obj,imgL,imgR,disp):
     mindisp = stereo_obj.getMinDisparity()
@@ -117,26 +99,75 @@ def disptodepth(stereo_obj,imgL,imgR,disp):
     print('exiting disptodepth') 
     return depth
 
-#def depthtopcl(depth,stereo_obj,imgL,disp):
+def disptodepth_matriximprovement(disp,imgL):
+    print('Conversion started')
+    (h,l) = np.shape(imgL)
+    (p1,p2) = readPmatrix()
+    a = p1[0,0]
+    b = p1[0,2]
+    c = p1[1,2]
+    d = p2[0,3]
+    d = 0-d
+    coordinates = np.mgrid[0:l,0:h,a:a+1].T.reshape(-1,3) #creating a 2d point array for storing x-y locations. as index progress, column changes first.
+    coordinates2 = coordinates-[b,c,0]
+    coordinates3 = coordinates2.astype('float32')/float(a)
+    disp2 = disp/16
+    disp2[disp2==0] = 1
+    n = np.copy(disp2)
+    n = np.flipud(n)
+    #plt.imshow(n, vmax =n.max(),vmin=n.min() )
+    #plt.show()
     
-    #(h,l) = np.shape(imgL)
-    #coordinates = np.mgrid[0:h,0:l,0:1].T.reshape(-1,3) #creating a 3d point array for storing x-y-z locations. as index progress, column changes first.
-    #color = np.empty_like(coordinates)
-    #print('Conversion started')
-    ##colorimg = cv2.cvtColor(imgL, cv2.COLOR_RGB2GRAY)
-    #for i in range(np.shape(coordinates)[0]/10):
-        #a = coordinates[i,0]
-        #b = coordinates[i,1]
-        #coordinates[:,2] = depth[a,b]
-        #color[i] = np.array([imgL[a,b]]*3)
-        #print(i)
-    #np.save('co',coordinates)
-    #np.save('co',color)
-    #print('conversion completed')
-    #pcl_obj = pcl.PointCloud(coordinates, color)
-    #pcl_obj.write_ply('test.ply')
+    
+    z = float(d)/n
+    return z
 
-def depthtopcl2(depth,stereo_obj,imgL,disp):
+
+
+def depthtopcl_improvedcalc(z,imgL):
+    (h,l) = np.shape(imgL)
+    (p1,p2) = readPmatrix()
+    a = p1[0,0]
+    b = p1[0,2]
+    c = p1[1,2]
+    d = p2[0,3]
+    d = 0-d
+    coordinates = np.mgrid[0:l,0:h,a:a+1].T.reshape(-1,3) #creating a 2d point array for storing x-y locations. as index progress, column changes first.
+    coordinates2 = coordinates-[b,c,0]
+    coordinates3 = coordinates2.astype('float32')/float(a)    
+    plt.figure()
+    plt.imshow(z, vmax = z.max(),vmin= z.min() )
+    mpldatacursor.datacursor(hover=True, bbox=dict(alpha=1, fc='w'))
+    
+    plt.show()   
+    z = z.reshape(-1,1)
+    cors3d = coordinates3*z
+    
+    #deptharray = (depth).T.reshape(-1,1) 
+    #deptharray = deptharray - deptharray.min() + 1 #Converting depth to positive values only.
+    
+    #cors_mat = np.hstack((coordinates, deptharray))
+    print(cors3d.shape)
+     
+    
+    #colorimg = cv2.cvtColor(imgL, cv2.COLOR_RGB2GRAYnp.save('co',coordinates)
+    color_mat = np.copy(imgL)
+    color_vector = np.flipud(color_mat).reshape(-1,1) #array of colors according to co-ordinate indexing
+    color_mat = np.hstack((color_vector,color_vector,color_vector))
+    #color_mat = color_mat.T.reshape(-1,3)
+    
+        
+    
+    np.save('cors', cors3d)
+    np.save('co',color_mat)
+    print('conversion completed')
+    pcl_obj = pcl.PointCloud(cors3d, color_mat)
+    pcl_obj2 = pcl_obj.filter_infinity()
+    pcl_obj2.write_ply('test23.ply')
+    
+            
+        
+def depthtopcl2(depth,stereo_obj,imgL):
     print('Conversion started')
     (h,l) = np.shape(imgL)
     coordinates = np.mgrid[0:h,0:l].T.reshape(-1,2) #creating a 2d point array for storing x-y locations. as index progress, column changes first.
@@ -160,15 +191,15 @@ def depthtopcl2(depth,stereo_obj,imgL,disp):
     print('conversion completed')
     pcl_obj = pcl.PointCloud(cors_mat, color_mat)
     pcl_obj.filter_infinity()
-    pcl_obj.write_ply('test.ply')
+    pcl_obj.write_ply('test2.ply')
     
             
         
 
-testfromkitti()
+
 disp = stereo.compute(imgL,imgR)
-depth = disptodepth(stereo, imgL, imgR, disp)
-depthtopcl2(depth, stereo, imgL, disp)
+depth = disptodepth_matriximprovement(disp, imgL)
+depthtopcl_improvedcalc(depth, imgL)
 # disparity = stereo.compute(imgL,imgR)
 # plt.figure()
 # plt.set_cmap('gray')

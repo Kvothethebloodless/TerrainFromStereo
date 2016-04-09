@@ -25,6 +25,29 @@ def loadfromtuner(d_obj,filename):
 	#d_obj.setPreFilterType(att_dict[attr_list[10]])
 	return d_obj
 
+
+def readPmatrix():
+    f = open('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/calib.txt')
+    txt = f.readlines()
+    p1_txt = txt[0]
+    p2_txt = txt[1]
+    p1_txt2 = p1_txt.split(' ')
+    p1 = p1_txt2[1::]
+    p1[-1] = p1[-1][0:-1]
+    p1 = map(float,p1)
+    p1_mat = np.reshape(p1,(3,4))
+
+
+    p2_txt2 = p2_txt.split(' ')
+    p2 = p2_txt2[1::]
+    p2[-1] = p2[-1][0:-1]
+    p2 = map(float,p2)
+    p2_mat = np.reshape(p2,(3,4))
+
+    return(p1_mat, p2_mat)
+
+
+
 imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/02/image_0/000100.png',0)
 imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/02/image_1/000100.png',0)
 
