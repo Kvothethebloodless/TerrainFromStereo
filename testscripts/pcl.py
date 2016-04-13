@@ -43,4 +43,7 @@ end_header
         mask = np.abs(self.coordinates[:, 2]) < 100
         coords = self.coordinates[mask]
         colors = self.colors[mask]
-        return PointCloud(coords, colors)
+        mask2 = coords[:,2]>0
+        coords2 = coords[mask2]
+        colors2 = colors[mask2]
+        return PointCloud(coords2, colors2)

@@ -10,8 +10,11 @@ plt.set_cmap('gray')
 
 class stereo_compute():
     def __init__(self):
-	self.imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/000300.png',0)
-	self.imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/000300.png',0)
+	#self.imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/000300.png',0)
+	#self.imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/000300.png',0)
+	self.imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/tsukuba/left1.ppm',0)
+	self.imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/tsukuba/right1.ppm',0)	
+
 	self.fname_left = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/*.png'))
 	self.fname_right = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/*.png'))
 	
@@ -104,7 +107,7 @@ def writetofile():
    
 
 root = Tk()   
-s_windowsize = Scale(root, orient = 'horizontal', from_ =5, to =60, command = cmd_windowsize, label = 'windowsize',length = 1500)
+s_windowsize = Scale(root, orient = 'horizontal', from_ =1, to =60, command = cmd_windowsize, label = 'windowsize',length = 1500)
 s_mindisp = Scale(root, orient = 'horizontal', from_ =-300, to= 300, command = cmd_mindisp, label = 'minimum disparity',length = 1500)
 s_numdisp = Scale(root, orient = 'horizontal', from_= 1, to =30, command = cmd_numdisp, label= 'Disparity Range as multiple of 16',length = 1500)
 s_ur = Scale(root, orient = 'horizontal', from_= 1, to =100, command = cmd_ur, label= 'Unique ratio' , length = 1500)

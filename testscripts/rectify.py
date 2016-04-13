@@ -19,11 +19,9 @@ def drawlines(img1,img2,lines,pts1,pts2):
     return img1,img2
 
 img1 = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/000000.png',0)  #queryimage # left image datasets/Reindeer/
-
 img2 = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/000000.png',0) #trainimage # right image
 
 sift = cv2.ORB_create()
-
 
 # find the keypoints and descriptors with SIFT
 kp1, des1 = sift.detectAndCompute(img1,None)
@@ -32,7 +30,7 @@ kp2, des2 = sift.detectAndCompute(img2,None)
 # FLANN parameters
 FLANN_INDEX_KDTREE = 0
 index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-    search_params = dict(checks=50)
+search_params = dict(checks=50)
 
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 matches = bf.match(des1,des2)
@@ -64,6 +62,7 @@ pts2 = pts2[mask.ravel()==1]
 lines1 = cv2.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2,F)
 lines1 = lines1.reshape(-1,3)
 img5,img6 = drawlines(img1,img2,lines1,pts1,pts2)
+
 
 # Find epilines corresponding to points in left image (first image) and
 # drawing its lines on right image
