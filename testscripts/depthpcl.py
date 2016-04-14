@@ -7,6 +7,7 @@ import yaml
 from matplotlib import pyplot as plt
 import pcl as pcl
 import mpldatacursor
+import utilites.helper as hp
 
 plt.ion()
 plt.set_cmap('gray')
@@ -40,52 +41,40 @@ def getcameraparams():
     d = p2[0,3]
     return (a,b,c,d)
 
-def testfromkitti():
+#def testfromkitti():
 
-    disp = stereo.compute(imgL,imgR)
-    plt.imshow(disp)
-    plt.show()
-
-def imagetoworld_transform_alternate(points,(h,l)):
-    
-    points = np.array(points, dtype='int')
-    points[:,1] = h-1 - points[:,1] #Doing this as SIFT already gives in x,yform
-    flipped_points = points
-       
-    cors = np.load('cors.npy')
-    index =  l*flipped_points[:,1] + flipped_points[:,0]
-    print(index)
-    return cors[index]
-    
-    
+    #disp = stereo.compute(imgL,imgR)
+    #plt.imshow(disp)
+    #plt.show()
 
 
-def imagetoworld_transform(points,disp_map,h,cameraparams):
-    (a,b,c,d) = cameraparams
-    d = 0-d
-    points = points.astype('int16') #AS SIFT does subpixel estimation
-    points = np.fliplr(points)
-    disp = []
-    for point in points:   #Flipping point as the SIFT descriptor reversed it.
-        print(point)
-        disp.append((disp_map[point[0],point[1]])/16) #Retreiving the disparity value
-        print(disp)
-    disp = np.array(disp,dtype='float')
-    #disp = disp/16
-    disp[disp==0] = 1 #Making it nonzero
-    z = float(d)/disp
-    z = z.reshape(-1,1)
-    no_points = np.shape(points)[0]
+
+#def featurepoint_toworldtransform(points,disp_map,h,cameraparams):
+    #(a,b,c,d) = cameraparams
+    #d = 0-d
+    #points = points.astype('int16') #AS SIFT does subpixel estimation
+    #points = np.fliplr(points)
+    #disp = []
+    #for point in points:   #Flipping point as the SIFT descriptor reversed it.
+        #print(point)
+        #disp.append((disp_map[point[0],point[1]])/16) #Retreiving the disparity value
+        #print(disp)
+    #disp = np.array(disp,dtype='float')
+    ##disp = disp/16
+    #disp[disp==0] = 1 #Making it nonzero
+    #z = float(d)/disp
+    #z = z.reshape(-1,1)
+    #no_points = np.shape(points)[0]
     
        
-    flipped_points = [h,0]-points; #Flipping point to match the numpy row-column convention to world convention
-    #world_points = np.hstack((flipped_points,a)) #Adding a
-    world_points = np.fliplr(flipped_points) #Flipping as xandy are interchanged in numpyconvention.   
-    world_points = world_points - [b,c]
-    world_points = world_points.astype('float32')/float(a)
-    world_points = np.hstack((world_points,np.ones((no_points,1))))
-    world_points = world_points*z
-    return world_points
+    #flipped_points = [h,0]-points; #Flipping point to match the numpy row-column convention to world convention
+    ##world_points = np.hstack((flipped_points,a)) #Adding a
+    #world_points = np.fliplr(flipped_points) #Flipping as xandy are interchanged in numpyconvention.   
+    #world_points = world_points - [b,c]
+    #world_points = world_points.astype('float32')/float(a)
+    #world_points = np.hstack((world_points,np.ones((no_points,1))))
+    #world_points = world_points*z
+    #return world_points
     
     
     
@@ -107,9 +96,7 @@ def disptodepth(disp,imgL,cameraparams):
     z = float(d)/n
     return z
 
-
-
-def depthtopcl(z,imgL,cameraparams):
+def depthtocordinates(z,imgL,cameraparams):
     (a,b,c,d) = cameraparams
     (h,l) = np.shape(imgL)
     
@@ -120,10 +107,10 @@ def depthtopcl(z,imgL,cameraparams):
     coordinates2 = coordinates-[b,c,0]
     coordinates3 = coordinates2.astype('float32')/float(a)    
     
-    plt.figure()
-    plt.imshow(z, vmax = z.max(),vmin= z.min() )
-    mpldatacursor.datacursor(hover=True, bbox=dict(alpha=1, fc='w'))
-    plt.show()   
+    #plt.figure()
+    #plt.imshow(z, vmax = z.max(),vmin= z.min() )
+    #mpldatacursor.datacursor(hover=True, bbox=dict(alpha=1, fc='w'))
+    #plt.show()   
     
     z = z.reshape(-1,1)
     cors3d = coordinates3*z
@@ -144,23 +131,48 @@ def depthtopcl(z,imgL,cameraparams):
     
     
     
-    np.save('cors', cors3d)
-    np.save('co',color_mat)
+    #np.save('cors', cors3d)
+    #np.save('co',color_mat)
     
+    return(cors3d,color_mat)
+
+def filter_coordinates(cords3d,color_mat):
+    mask1 = np.abs(cords3d[:,2])<100;
+    mask2 = cords3d[:,2]>0;
+    mask = np.logical_and(mask1, mask2)
+    return(cords3d[mask],color_mat[mask])
+ 
+def corstopcl(cors3d, color_mat,filename):
     print('Writing to file')
+    
+    fullnpyfname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/coordinates/'+ str(filename)+'.npy'
+    np.save(fullnpyfname, cors3d) 
+    
+    (cors3d, color_mat) = filter_coordinates(cords3d, color_mat)
     pcl_obj = pcl.PointCloud(cors3d, color_mat)
-    pcl_obj2 = pcl_obj.filter_infinity()    
-    pcl_obj2.write_ply('test234.ply')
-    print('Finished writing to file')
+    fullfname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/pointclouds/'+ str(filename)+'.ply'
+    pcl_obj2.write_ply(fullfname)
 
+    print("Finished writing to file:" + str(fullfname))
 
+def loadfromtuner(filename):
+    window_size = 11
+    min_disp = 0
+    num_disp = 160
+    #stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=window_size)
+    
+    stereo = cv2.StereoSGBM_create(minDisparity = min_disp,
+    numDisparities = num_disp,
+    blockSize = window_size,
+    uniquenessRatio = 1,
+    speckleWindowSize = 50,
+    speckleRange = 2,
+    disp12MaxDiff = 10,
+    P1 = 8*3*window_size**2,
+    P2 = 32*3*window_size**2)
 
-
-
-
-
-def loadfromtuner(d_obj,filename):
-    fname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/tes' 
+    d_obj = stereo
+    fname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/validforall' 
     attr_list = ['numDisparities','preFilterSize','speckleRange','uniquenessRatio', 'blockSize', 'minDisparity','speckleWindowSize', 'textureThreshold', 'preFilterCap','disp12MaxDiff', 'preFilterType','P1','P2']
     att_dict = yaml.load(open(fname,'r'))['my_object']
     d_obj.setNumDisparities(att_dict[attr_list[0]])
@@ -178,42 +190,28 @@ def loadfromtuner(d_obj,filename):
     #d_obj.setPreFilterType(att_dict[attr_list[10]])
     return d_obj
 
-imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/000101.png',0)
-imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/000101.png',0)                                                                                                                                                                                                                     
 
-fname_left = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/*.png'))
-fname_right = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/*.png'))
+def stereoPairToPCL(seqno,fno):
+    
+    (imgL,imgR) = hp.loadstereopair_kitti(seqno,fno,0)
+    print imgL.shape
+ 
+    stereo = loadfromtuner('tes')
+    cameraparams = getcameraparams()
+    
+    disp = stereo.compute(imgL,imgR)
+    depth = disptodepth(disp, imgL,cameraparams)
+    (cors,colors) = depthtocordinates(depth, imgL,cameraparams)
+    corstopcl(cors, colors, str('seq'+seqno+'frame'+str(fno)))
+    
+    #plt.imshow(imgL)
+    #plt.show()
+    
+    
+def fullseqpcl(seqno):
+    for i in range(100):
+        stereoPairToPCL('00',i)
 
-
-window_size = 11
-min_disp = 0
-num_disp = 160
-#stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=window_size)
-
-stereo = cv2.StereoSGBM_create(minDisparity = min_disp,
-numDisparities = num_disp,
-blockSize = window_size,
-uniquenessRatio = 1,
-speckleWindowSize = 50,
-speckleRange = 2,
-disp12MaxDiff = 10,
-P1 = 8*3*window_size**2,
-P2 = 32*3*window_size**2)
-
-
-stereo = loadfromtuner(stereo, 'tes')
-cameraparams = getcameraparams()
-
-
-            
-        
-
-
-disp = stereo.compute(imgL,imgR)
-depth = disptodepth(disp, imgL,cameraparams)
-depthtopcl(depth, imgL,cameraparams)
-plt.imshow(imgL)
-plt.show()
 # disparity = stereo.compute(imgL,imgR)
 # plt.figure()
 # plt.set_cmap('gray')

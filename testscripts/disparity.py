@@ -6,8 +6,24 @@ import yaml
 from matplotlib import pyplot as plt
 
 plt.set_cmap('gray')
-def loadfromtuner(d_obj,filename):
-	fname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/'+str(filename) 
+def loadfromtuner(filename):
+	window_size = 11
+	min_disp = 0
+	num_disp = 160
+	#stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=window_size)
+
+	stereo = cv2.StereoSGBM_create(minDisparity = min_disp,
+	                               numDisparities = num_disp,
+	                               blockSize = window_size,
+	                               uniquenessRatio = 1,
+	                               speckleWindowSize = 50,
+	                               speckleRange = 2,
+	                               disp12MaxDiff = 10,
+	                               P1 = 8*3*window_size**2,
+	                               P2 = 32*3*window_size**2)
+
+	d_obj = stereo
+	fname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/validforall' 
 	attr_list = ['numDisparities','preFilterSize','speckleRange','uniquenessRatio', 'blockSize', 'minDisparity','speckleWindowSize', 'textureThreshold', 'preFilterCap','disp12MaxDiff', 'preFilterType','P1','P2']
 	att_dict = yaml.load(open(fname,'r'))['my_object']
 	d_obj.setNumDisparities(att_dict[attr_list[0]])

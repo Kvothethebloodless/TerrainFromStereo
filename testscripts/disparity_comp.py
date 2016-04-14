@@ -5,18 +5,21 @@ import time
 from matplotlib import pyplot as plt
 from Tkinter import *
 import pickle
+import utilites.helper as hp
 
 plt.set_cmap('gray')
 
 class stereo_compute():
-    def __init__(self):
+    def __init__(self,seqno,fno):
 	#self.imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/000300.png',0)
 	#self.imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/000300.png',0)
-	self.imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/tsukuba/left1.ppm',0)
-	self.imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/tsukuba/right1.ppm',0)	
+	
+	(self.imgL,self.imgR) = hp.loadstereopair_kitti(seqno,fno,0)
+	#self.imgL = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/tsukuba/left1.ppm',0)
+	#self.imgR = cv2.imread('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/tsukuba/right1.ppm',0)	
 
-	self.fname_left = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/*.png'))
-	self.fname_right = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/*.png'))
+	#self.fname_left = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_0/*.png'))
+	#self.fname_right = sorted(glob.glob('/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/datasets/video_seq/dataset/sequences/00/image_1/*.png'))
 	
 	self.window_size = 11
 	self.min_disp = -64
@@ -31,7 +34,7 @@ class stereo_compute():
 	self.disp = self.stereo.compute(self.imgL, self.imgR)
 	self.fig = plt.figure()
 	self.ax = self.fig.add_subplot(211)
-	self.ax.set_title("My Title")
+	self.ax.set_title('From sequence'+seqno+' frame no'+str(fno))
 	self.im = self.ax.imshow(self.imgL, cmap='gray')# Blank starting image
 	
 	self.ax2 = self.fig.add_subplot(212)
@@ -53,7 +56,7 @@ class stereo_compute():
 	self.fig.canvas.draw()
 	
 	
-str_obj = stereo_compute()
+str_obj = stereo_compute('00',100)
  
 def cmd_windowsize(value):
     #print('windsize'+str((int(value)*2)+1))
