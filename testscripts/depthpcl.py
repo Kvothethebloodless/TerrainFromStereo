@@ -85,9 +85,6 @@ def disptodepth(disp,imgL,cameraparams):
     (a,b,c,d) = cameraparams
     print('Conversion started')
     (h,l) = np.shape(imgL)
-    
-   
-    
     d = 0-d
     disp2 = disp/16
     disp2[disp2==0] = 1
@@ -137,7 +134,7 @@ def depthtocordinates(z,imgL,cameraparams):
     return(cors3d,color_mat)
 
 def filter_coordinates(cords3d,color_mat):
-    mask1 = np.abs(cords3d[:,2])<100;
+    mask1 = np.abs(cords3d[:,2])<50;
     mask2 = cords3d[:,2]>0;
     mask = np.logical_and(mask1, mask2)
     return(cords3d[mask],color_mat[mask])
@@ -148,8 +145,8 @@ def corstopcl(cors3d, color_mat,filename):
     fullnpyfname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/coordinates/'+ str(filename)+'.npy'
     np.save(fullnpyfname, cors3d) 
     
-    (cors3d, color_mat) = filter_coordinates(cords3d, color_mat)
-    pcl_obj = pcl.PointCloud(cors3d, color_mat)
+    (cors3d, color_mat) = filter_coordinates(cors3d, color_mat)
+    pcl_obj2 = pcl.PointCloud(cors3d, color_mat)
     fullfname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/pointclouds/'+ str(filename)+'.ply'
     pcl_obj2.write_ply(fullfname)
 
@@ -172,7 +169,7 @@ def loadfromtuner(filename):
     P2 = 32*3*window_size**2)
 
     d_obj = stereo
-    fname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/validforall' 
+    fname = '/home/manish/Awesomestuff/Subjects/IVP/Project_stereo/gen_data/fine' 
     attr_list = ['numDisparities','preFilterSize','speckleRange','uniquenessRatio', 'blockSize', 'minDisparity','speckleWindowSize', 'textureThreshold', 'preFilterCap','disp12MaxDiff', 'preFilterType','P1','P2']
     att_dict = yaml.load(open(fname,'r'))['my_object']
     d_obj.setNumDisparities(att_dict[attr_list[0]])

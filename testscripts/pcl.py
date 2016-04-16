@@ -38,6 +38,13 @@ end_header
                                             vertex_count=len(self.coordinates)))
             np.savetxt(outfile, points, '%f %f %f %d %d %d')
 
+    def filter_sky(self):
+        mask1 = self.colors[:,1] > 147
+        mask2 = self.colors[:,1] < 155
+        mask = np.logical_and(mask1,mask2)
+        self.coordinates = self.coordinates[mask]
+        self.colors = self.colors[mask]
+        
     def filter_infinity(self):
         """Filter infinite distances from ``PointCloud.``"""
         mask = np.abs(self.coordinates[:, 2]) < 100

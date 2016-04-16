@@ -117,17 +117,17 @@ def getfeatures(img,template,no_points,onsides):
 
 
     #### Code to show matched features side by side.
-    #h1, w1 = img.shape[:2]
-    #h2, w2 = template.shape[:2]
-    #nWidth = w1+w2
-    #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-    #template = cv2.cvtColor(template, cv2.COLOR_GRAY2BGR)
+    h1, w1 = img.shape[:2]
+    h2, w2 = template.shape[:2]
+    nWidth = w1+w2
+    img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+    template = cv2.cvtColor(template, cv2.COLOR_GRAY2BGR)
 
-    #nHeight = max(h1, h2)
-    #hdif = (h1-h2)/2
-    #newimg = np.zeros((nHeight, nWidth, 3), np.uint8)
-    #newimg[hdif:hdif+h2, :w2] = template
-    #newimg[:h1, w2:w1+w2] = img
+    nHeight = h1
+    hdif = (h1-h2)/2
+    newimg = np.zeros((nHeight, nWidth, 3), np.uint8)
+    newimg[hdif:hdif+h2, :w2] = template
+    newimg[:h1, w2:w1+w2] = img
     
     #tkp = tkp_final
     #skp = skp_final
@@ -136,17 +136,22 @@ def getfeatures(img,template,no_points,onsides):
     pts_2 = []
     
     for i in range(min(no_points,len(skp),len(tkp))):
-        #pt_a = (int(tkp[i].pt[0]),int(tkp[i].pt[1]))
-        #pt_b = (int(skp[i].pt[0]),int(skp[i].pt[1]))
+        pt_a1 = (int(tkp[i].pt[0]),int(tkp[i].pt[1]))
+        pt_b1 = (int(skp[i].pt[0]),int(skp[i].pt[1])+w2)
         
         pt_a = tkp[indices1[i]].pt  #Retrieveing tk corresponding to lowest distances
         pt_b = skp[idx1[i]].pt #Retreieveing the correspoding sk to tk.
+        pt_b_rep =(int(pt_b[0]),int(pt_b[1]))
+        pt_a_rep = (int(pt_a[0]),int(pt_a[1]+w2))
         
-        #cv2.line(newimg, pt_a, pt_b, (255-10*i, 10*i, 5*i),thickness=3)
+        cv2.line(newimg, pt_b_rep, pt_a_rep, (255-10*i, 10*i, 5*i),thickness=3)
         
         pts_1.append(pt_a)
         pts_2.append(pt_b)
         
+    plt.ion()
+    plt.imshow(newimg)
+    plt.show()
     return (pts_1, pts_2)
 
 
@@ -165,11 +170,11 @@ def neighbour3dpoints(seqno,f1,f2,no_sets,pointsperset):
     pts3d_1 = featurepoint_toworldtransform(pts_1, (h,l), cords1)
     pts3d_2 = featurepoint_toworldtransform(pts_2, (h,l), cords2)
     
-    mask1_1 = np.abs(pts3d_1[:,2])<100;
+    mask1_1 = np.abs(pts3d_1[:,2])<50;
     mask1_2 = pts3d_1[:,2]>0
     mask1 = np.logical_and(mask1_1,mask1_2)
     
-    mask2_1 = np.abs(pts3d_2[:,2])<100;
+    mask2_1 = np.abs(pts3d_2[:,2])<50;
     mask2_2 = pts3d_2[:,2]>0
     mask2 = np.logical_and(mask2_1,mask2_2)
     
